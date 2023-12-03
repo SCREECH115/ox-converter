@@ -1,0 +1,83 @@
+@import url('https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;700&family=Manrope:wght@200;300;400;500;600;700;800&family=Oswald:wght@300;500&family=Poppins:wght@100;200;300;400;500;600;700;800;900&family=Roboto+Flex:opsz,wght@8..144,100;8..144,200;8..144,300;8..144,400;8..144,500;8..144,600;8..144,700;8..144,800;8..144,900&family=Roboto:wght@100;300;400;500;700;900&display=swap');
+
+:root {
+   --bg: rgb(59, 59, 59);
+   --fontColor: #fff;
+   --spacingDesktop: 20px;
+}
+
+* {
+   box-sizing: border-box;
+   margin: 0;
+   padding: 0;
+   color: var(--fontColor);
+   font-family: 'Roboto', sans-serif;
+}
+
+.main-container {
+   background: var(--bg);
+   border-radius: 20px;
+   margin: 20px 20px;
+   padding: 20px;
+   height: 95vh;
+}
+
+.title {
+   display: flex;
+   justify-content: center;
+   margin-top: var(--spacingDesktop);
+}
+
+.description { 
+   display: flex;
+   justify-content: center;
+}
+
+.excluded-items {
+   margin-top: var(--spacingDesktop);
+   text-align: center;
+}
+
+.input {
+   display: flex;
+   justify-content: center;
+   margin-top: var(--spacingDesktop);
+}
+
+#input-data {
+   padding: 10px;
+   color: var(--bg);
+}
+
+.buttons {
+   display: flex;
+   justify-content: center;
+   gap: 10px;
+   margin: var(--spacingDesktop) 0;
+}
+
+.collapse {
+   border: 1px solid white;
+   border-radius: 5px;
+}
+
+.result {
+   display: flex;
+   justify-content: center;
+}
+
+.result-info {
+   background: white;
+   padding: 5px 15px;
+   color: var(--bg);
+   font-weight: 400;
+   border-radius: 5px;
+}
+
+.disable {
+   display: none;
+}
+
+/*  */
+/* UNIVERSE */
+/*  */
