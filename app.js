@@ -29,9 +29,33 @@ let combinedSql = '';
 const dataIdMap = {
     pistols: {
         'combat-pistol': 'WEAPON_COMBATPISTOL',
+        'carbinerifle': 'WEAPON_CARBINERIFLE',
+        'ceramic-pistol': 'WEAPON_CERAMICPISTOL',
+        'double-action': 'WEAPON_DOUBLEACTION',
+        'heavy-pistol': 'WEAPON_HEAVYPISTOL',
+        'machine-pistol': 'WEAPON_MACHINEPISTOL',
+        'marksman-pistol': 'WEAPON_MARKSMANPISTOL',
+        'micro-smg': 'WEAPON_MICROSMG',
+        'mini-smg': 'WEAPON_MINISMG',
+        'pistol': 'WEAPON_PISTOL',
+        'pistol50': 'WEAPON_PISTOL50',
+        'pistol-mk2': 'WEAPON_PISTOL_MK2',
+        'weapon-shotgun-beanbag': 'WEAPON_BEANBAG',
+        'revolver': 'WEAPON_REVOLVER',
+        'weapon-sawnoff-shotgun': 'WEAPON_SAWNOFFSHOTGUN',
+        'smg': 'WEAPON_SMG',
+        'hunting-rifle': 'WEAPON_SNIPERRIFLE',
+        'sns-pistol': 'WEAPON_SNSPISTOL',
+        'sns-pistol-mk2': 'WEAPON_SNSPISTOL_MK2',
+        'stun-gun': 'WEAPON_STUNGUN',
+        'vintage-pistol': 'WEAPON_VINTAGEPISTOL',
+        'tactical-rifle': 'WEAPON_TACTICALRIFLE'
     },
     ammo: {
         'pistol-ammo': 'ammo_9',
+        'rifle-ammo': 'ammo_rifle',
+        'shotgun-beanbag-ammo': 'ammo_shotgun_beanbag',
+        'cartridge': 'ammo_stungun'
     },
 };
 
