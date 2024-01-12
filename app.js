@@ -6,7 +6,11 @@
 // - magazynki
 // - telefony
 // - CAŁY HOUSING
+// - szafki dowodowe
+// - niektóre itemy mogą mieć niższą wytrzymałość niż miały wcześniej
 // - dodatki do broni (przenosimy samą broń bez attachmentów)
+// - wszystkie magazynki pojawią się jako amunicja z tą samą ilością, która była w magazynku
+// - wszystkie paczki amunicji zostaną zamienione na amunicję z tą samą ilością, która była w paczce
 // - warto, żeby gracze wpłacili całość gotówki na konta bankowe (item pieniedzy też zostanie przeniesiony dla to kwestia bezpieczenstwa)
 // - czy na ox durability 100 to maks? jezeli tak to trzeba ustawic wszystko na 100, aktualne bornie maja po 600
 // - wszystkie itemy z ziemi out
@@ -49,15 +53,39 @@ const dataIdMap = {
         'sns-pistol-mk2': 'WEAPON_SNSPISTOL_MK2',
         'stun-gun': 'WEAPON_STUNGUN',
         'vintage-pistol': 'WEAPON_VINTAGEPISTOL',
-        'tactical-rifle': 'WEAPON_TACTICALRIFLE'
+        'tactical-rifle': 'WEAPON_TACTICALRIFLE',
+        'hand-flashlight': 'WEAPON_FLASHLIGHT',
+        'police-bat': 'WEAPON_NIGHTSTICK',
+        'knife': 'WEAPON_KNIFE',
+        'molotov': 'WEAPON_MOLOTOV',
+        'petrol-can': 'WEAPON_PETROLCAN',
+        'broken-bottle': 'WEAPON_BOTTLE',
+        'baseball-bat': 'WEAPON_BAT',
+        'ceramic-pistol': 'WEAPON_CERAMICPISTOL',
+        'crowbar': 'WEAPON_CROWBAR',
+        'double-action': 'WEAPON_DOUBLEACTION',
+        'fire-extinguisher': 'WEAPON_FIREEXTINGUISHER',
+        'flare': 'WEAPON_FLARE',
+        'golf-club': 'WEAPON_GOLFCLUB',
+        'marksman-pistol': 'WEAPON_MARKSMANPISTOL',
+        'wrench': 'WEAPON_WRENCH',
+        'flashlight': 'at_flashlight',
+        'silencer': 'at_suppressor_light',
     },
     ammo: {
         'pistol-ammo': 'ammo_9',
         'rifle-ammo': 'ammo_rifle',
         'shotgun-beanbag-ammo': 'ammo_shotgun_beanbag',
-        'cartridge': 'ammo_stungun'
+        'cartridge': 'ammo_stungun',
+        'weed1g': 'weed1g',
+        'water': 'water',
+        'pistol-magazine': 'ammo_9',
     },
+    ammo_magazines: {
+        'pistol-ammo-box': 'ammo_9',
+    }
 };
+
 
 convertBtn.addEventListener('click', () => {
    resultInfo.classList.add('disable');
@@ -116,11 +144,51 @@ copyBtn.addEventListener('click', () => {
 // ------------------------------------------------------------
 
 function modifyJsonData(jsonData) {
-   const excludedItems = ['coupon-lottery', 'omen', 'wallet', 'sniper-magazine', 'phone'];
+   const excludedItems = ['coupon-lottery', 'omen', 'sniper-magazine', 'phone'];
 
    return jsonData.rows
         .filter(row => (row.inventoryId.startsWith('ply-') || row.inventoryId.startsWith('trunk-')) && row.slot >= 0 && row.slot <= 23 && !excludedItems.includes(row.dataId))
         .map(row => {
+           let amountFound = false;
+
+           if (row.dataId === 'wallet') {
+                if (row.metadata) {
+                    const metadataObj = JSON.parse(row.metadata);
+                    if (metadataObj.cash !== undefined) {
+                        row.count = metadataObj.cash;
+                        amountFound = true;
+                    } else {
+                        row.count = 0; 
+                    }
+                    delete row.metadata;
+                }
+                row.dataId = 'money'; 
+            }
+
+           if (dataIdMap.ammo_magazines[row.dataId]) {
+                row.dataId = dataIdMap.ammo_magazines[row.dataId];
+                row.count = 30;
+                delete row.metadata;
+            }
+
+            if (dataIdMap.ammo[row.dataId]) {
+                row.dataId = dataIdMap.ammo[row.dataId];
+                if (row.metadata) {
+                    const metadataObj = JSON.parse(row.metadata);
+                    if (metadataObj.ammo !== undefined) {
+                        row.count = metadataObj.ammo; 
+                        amountFound = true;
+                    } else if (metadataObj.amount !== undefined) {
+                        row.count = metadataObj.amount;
+                        amountFound = true;
+                    }
+                    else {
+                        row.count = 1; 
+                    }
+                    delete row.metadata;
+                }
+            }
+
             Object.entries(dataIdMap).forEach(([category, items]) => {
                 if (items[row.dataId]) {
                     row.dataId = items[row.dataId];
@@ -142,7 +210,6 @@ function modifyJsonData(jsonData) {
                row.name = 'money';
            }
 
-           let amountFound = false;
 
            if (row.metadata) {
                const metadataObj = JSON.parse(row.metadata);
@@ -159,6 +226,11 @@ function modifyJsonData(jsonData) {
                delete metadataObj.attachments;
                delete metadataObj.usesLeft;
                delete metadataObj.quality;
+               delete metadataObj.shopAmount;
+               delete metadataObj.shopPrice;
+               delete metadataObj.wetness;
+               delete metadataObj.maxAmmo;
+               delete metadataObj.ammo;
                
                if (metadataObj.identifier) {
                    metadataObj.serial = metadataObj.identifier;
