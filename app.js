@@ -7,6 +7,7 @@
 // - telefony
 // - CAŁY HOUSING
 // - szafki dowodowe
+// - posiadaczae drabin w zamian dostaną krzesło letniskowe
 // - niektóre itemy mogą mieć niższą wytrzymałość niż miały wcześniej
 // - dodatki do broni (przenosimy samą broń bez attachmentów)
 // - wszystkie magazynki pojawią się jako amunicja z tą samą ilością, która była w magazynku
@@ -80,11 +81,25 @@ const dataIdMap = {
         'weed1g': 'weed1g',
         'water': 'water',
         'pistol-magazine': 'ammo_9',
+        'sandwich': 'sandwich',
     },
     ammo_magazines: {
         'pistol-ammo-box': 'ammo_9',
     }
 };
+
+const changeNameOfItems = {
+    'leather': 'leather1',
+}
+
+const changeDurabilityFrom600To100 = [
+    'WEAPON_COMBATPISTOL',
+    'WEAPON_CERAMICPISTOL',
+    'WEAPON_HEAVYPISTOL',
+    'WEAPON_PISTOL50',
+    'WEAPON_DOUBLEACTION',
+    'WEAPON_REVOLVER',
+];
 
 
 convertBtn.addEventListener('click', () => {
@@ -93,12 +108,24 @@ convertBtn.addEventListener('click', () => {
    data.push(...modifyJsonData(JSON.parse(jsonData.value)));
 
    const groupedData = data.reduce((acc, item) => {
-        let inventoryId = item.inventoryId.replace(/ply-|trunk-/g, '');
+        let inventoryId = item.inventoryId.replace(/ply-|trunk-|glove-|society-/g, '');
         if (typeof item.metadata === 'string') {
             item.metadata = safeParse(item.metadata); 
         }
 
-        let key = item.inventoryId.startsWith('ply-') ? 'users' : 'owned_vehicles';
+        let key;
+        if (item.inventoryId.startsWith('ply-')) {
+            key = 'users';
+        } else if (item.inventoryId.startsWith('trunk-')) {
+            key = 'owned_vehicles';
+        } else if (item.inventoryId.startsWith('glove-')) {
+            key = 'glovebox'; 
+        } else if (item.inventoryId.startsWith('house-')) {
+            key = 'housing';
+        } else if (item.inventoryId.startsWith('society-')) {
+            key = 'society';
+        }
+
         acc[key] = acc[key] || {};
         acc[key][inventoryId] = acc[key][inventoryId] || [];
         delete item.inventoryId;
@@ -107,19 +134,54 @@ convertBtn.addEventListener('click', () => {
         return acc;
     }, {});
 
+    const processUsers = false;
+    const processOwnedVehicles = false;
+    const processSociety = true;
+    const processGlovebox = false;
+    const processHousing = false;
+
     const sqlQueries = [];
-    if (groupedData.users) {
+    if (processUsers && groupedData.users) {
         for (const [inventoryId, items] of Object.entries(groupedData.users)) {
             const inventoryData = JSON.stringify(items).replace(/'/g, "''").replace(/\\\\"/g, "'");
             sqlQueries.push(`UPDATE users SET inventory = '${inventoryData}' WHERE ID = ${inventoryId};`);
         }
     }
-    if (groupedData.owned_vehicles) {
+    if (processOwnedVehicles && groupedData.owned_vehicles) {
         for (const [inventoryId, items] of Object.entries(groupedData.owned_vehicles)) {
             const trunkData = JSON.stringify(items).replace(/'/g, "''").replace(/\\\\"/g, "'");
-            sqlQueries.push(`UPDATE owned_vehicles SET trunk = '${trunkData}' WHERE plate = '${inventoryId}';`);
+            sqlQueries.push(`INSERT INTO ox_inventorytemp (eqowner, data) VALUES ('plate-${inventoryId}', '${trunkData}');`);
         }
     }
+    if (processGlovebox && groupedData.glovebox) {
+        for (const [inventoryId, items] of Object.entries(groupedData.glovebox)) {
+            const gloveBoxData = JSON.stringify(items).replace(/'/g, "''").replace(/\\\\"/g, "'");
+            sqlQueries.push(`UPDATE owned_vehicles SET glovebox = '${gloveBoxData}' WHERE plate = '${inventoryId}';`);
+        }
+    }
+    if (processSociety && groupedData.society) {
+        for (const [inventoryId, items] of Object.entries(groupedData.society)) {
+            const societyData = JSON.stringify(items).replace(/'/g, "''").replace(/\\\\"/g, "'");
+            sqlQueries.push(`INSERT INTO ox_inventory (name, data) VALUES ('${inventoryId}', '${societyData}');`);
+        }
+    }
+    if (processHousing && groupedData.housing) {
+        for (const [inventoryId, items] of Object.entries(groupedData.housing)) {
+            const usedSlots = new Set();
+            const updatedItems = items.map(item => {
+                while (usedSlots.has(item.slot)) {
+                    item.slot++; 
+                }
+                usedSlots.add(item.slot);
+                return item;
+            });
+    
+            const houseData = JSON.stringify(updatedItems).replace(/'/g, "''").replace(/\\\\"/g, "'");
+            sqlQueries.push(`INSERT INTO ox_inventorytemp (eqowner, data) VALUES ('${inventoryId}', '${houseData}');`);
+        }
+    }
+    
+    
 
     combinedSql = sqlQueries.join('\n');
     jsonData.value = combinedSql;
@@ -144,12 +206,21 @@ copyBtn.addEventListener('click', () => {
 // ------------------------------------------------------------
 
 function modifyJsonData(jsonData) {
-   const excludedItems = ['coupon-lottery', 'omen', 'sniper-magazine', 'phone'];
+   const excludedItems = ['coupon-lottery', 'omen', 'phone'];
 
    return jsonData.rows
-        .filter(row => (row.inventoryId.startsWith('ply-') || row.inventoryId.startsWith('trunk-')) && row.slot >= 0 && row.slot <= 23 && !excludedItems.includes(row.dataId))
+        .filter(row => (row.inventoryId.startsWith('ply-') || row.inventoryId.startsWith('trunk-') || row.inventoryId.startsWith('glove-') || row.inventoryId.startsWith('house-') || row.inventoryId.startsWith('society-')) && row.slot >= 0 && row.slot <= 1000 && !excludedItems.includes(row.dataId))
         .map(row => {
            let amountFound = false;
+
+           if(changeNameOfItems[row.dataId]){
+                row.dataId = changeNameOfItems[row.dataId];
+            }
+
+            if (row.dataId === 'carton-box'){
+                row.dataId = 'chair';
+                delete row.metadata;
+            }
 
            if (row.dataId === 'wallet') {
                 if (row.metadata) {
@@ -194,7 +265,7 @@ function modifyJsonData(jsonData) {
                     row.dataId = items[row.dataId];
                     if (category === 'pistols' && row.metadata) {
                         let metadataObj = JSON.parse(row.metadata);
-                        if (metadataObj.durability) {
+                        if (metadataObj.durability !== undefined && changeDurabilityFrom600To100.includes(row.dataId)) {
                             metadataObj.durability = Math.round(metadataObj.durability / 6);
                         }
                         row.metadata = JSON.stringify(metadataObj);
@@ -220,6 +291,11 @@ function modifyJsonData(jsonData) {
                        delete metadataObj.amount;
                        amountFound = true;
                    }
+               }
+
+               if(row.metadata.includes('amount')){
+                     row.count = metadataObj.amount;
+                     amountFound = true;
                }
 
                delete metadataObj.lastUpdate;
