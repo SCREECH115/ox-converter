@@ -134,11 +134,11 @@ convertBtn.addEventListener('click', () => {
         return acc;
     }, {});
 
-    const processUsers = false;
-    const processOwnedVehicles = false;
+    const processUsers = true;
+    const processOwnedVehicles = true;
     const processSociety = true;
-    const processGlovebox = false;
-    const processHousing = false;
+    const processGlovebox = true;
+    const processHousing = true;
 
     const sqlQueries = [];
     if (processUsers && groupedData.users) {
