@@ -135,10 +135,10 @@ convertBtn.addEventListener('click', () => {
     }, {});
 
     const processUsers = true;
-    const processOwnedVehicles = true;
+    const processOwnedVehicles = false;
     const processSociety = true;
-    const processGlovebox = true;
-    const processHousing = true;
+    const processGlovebox = false;
+    const processHousing = false;
 
     const sqlQueries = [];
     if (processUsers && groupedData.users) {
@@ -150,7 +150,7 @@ convertBtn.addEventListener('click', () => {
     if (processOwnedVehicles && groupedData.owned_vehicles) {
         for (const [inventoryId, items] of Object.entries(groupedData.owned_vehicles)) {
             const trunkData = JSON.stringify(items).replace(/'/g, "''").replace(/\\\\"/g, "'");
-            sqlQueries.push(`INSERT INTO ox_inventorytemp (eqowner, data) VALUES ('plate-${inventoryId}', '${trunkData}');`);
+            sqlQueries.push(`INSERT INTO ox_inventory (owner, name, data) VALUES ('temp', 'plate-${inventoryId}', '${trunkData}');`);
         }
     }
     if (processGlovebox && groupedData.glovebox) {
@@ -177,7 +177,7 @@ convertBtn.addEventListener('click', () => {
             });
     
             const houseData = JSON.stringify(updatedItems).replace(/'/g, "''").replace(/\\\\"/g, "'");
-            sqlQueries.push(`INSERT INTO ox_inventorytemp (eqowner, data) VALUES ('${inventoryId}', '${houseData}');`);
+            sqlQueries.push(`INSERT INTO ox_inventory (owner, name, data) VALUES ('temp', '${inventoryId}', '${houseData}');`);
         }
     }
     
@@ -185,8 +185,8 @@ convertBtn.addEventListener('click', () => {
 
     combinedSql = sqlQueries.join('\n');
     jsonData.value = combinedSql;
-    console.log('sql:');
-    console.log(combinedSql);
+    // console.log('sql:');
+    // console.log(combinedSql);
 });
 
 copyBtn.addEventListener('click', () => {
@@ -206,7 +206,7 @@ copyBtn.addEventListener('click', () => {
 // ------------------------------------------------------------
 
 function modifyJsonData(jsonData) {
-   const excludedItems = ['coupon-lottery', 'omen', 'phone'];
+   const excludedItems = ['coupon-lottery', 'omen'];
 
    return jsonData.rows
         .filter(row => (row.inventoryId.startsWith('ply-') || row.inventoryId.startsWith('trunk-') || row.inventoryId.startsWith('glove-') || row.inventoryId.startsWith('house-') || row.inventoryId.startsWith('society-')) && row.slot >= 0 && row.slot <= 1000 && !excludedItems.includes(row.dataId))
@@ -314,6 +314,13 @@ function modifyJsonData(jsonData) {
                }
                if (metadataObj.durability) {
                    metadataObj.durability = Math.round(metadataObj.durability);
+               }
+
+               if (row.dataId == 'phone'){
+                    delete metadataObj.durability;
+                    delete metadataObj.fNumber;
+                    delete metadataObj.serial;
+
                }
 
                if (Object.keys(metadataObj).length === 0) {
